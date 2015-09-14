@@ -84,6 +84,28 @@ Module Main
         End If
     End Sub
 
+    Sub Usertyping_EventHandler(sender As Object, e As DiscordTypingStartEventArgs) Handles Client.UserTypingStart
+        Dim message As String = "Shutup, <@" + e.user.user.id + ">"
+        If (e.user.user.id = Settings.OwnerUserID) Then
+            If (Client.GetMessageLog().Count > 0) Then
+                If (Client.GetMessageLog().ElementAt(0).Value.content <> message) Then
+                    Client.SendMessageToChannel(message, e.channel)
+                End If
+            Else
+                Client.SendMessageToChannel(message, e.channel)
+            End If
+        End If
+
+    End Sub
+
+    Sub UnknownMessage_EventHandler(sender As Object, e As UnknownMessageEventArgs) Handles Client.UnknownMessageTypeReceived
+        Using sw As New StreamWriter(e.RawJson("t").ToString())
+            sw.WriteLine(e.RawJson)
+        End Using
+
+        Client.SendMessageToUser("New message type '" + e.RawJson("t").ToString() + "' has been discovered.", Client.GetServersList.Find(Function(x) x.members.Find(Function(y) y.user.id = Settings.OwnerUserID) IsNot Nothing).members.Find(Function(x) x.user.id = Settings.OwnerUserID))
+    End Sub
+
     Sub OnMessage_EventHandler(sender As Object, e As DiscordMessageEventArgs) Handles Client.MessageReceived
         Console.WriteLine(String.Format("<{0}> in #{1}: {2}", e.author.user.username, e.Channel.name, e.message.content))
         If e.message.content.StartsWith(Settings.CommandPrefix) Then
@@ -92,6 +114,16 @@ Module Main
                 Client.SendMessageToChannel("I work! In VB!", e.Channel)
             ElseIf trimmedString.StartsWith("eightball") Or trimmedString.StartsWith("8ball") Then
                 Eightball(e)
+            ElseIf trimmedString.StartsWith("slap") Then
+                If Settings.SlapEnabled Then
+                    ''TODO: Do proper things with this..
+                    Dim split As String() = e.message.content.Split({" "c}, 2)
+                    If (split.Length > 0) Then
+                        Client.SendMessageToChannel("\* **" + Client.Me.user.username + "** slaps **@" + split(1) + " ** around with a giant fishbot.", e.Channel)
+                    End If
+                End If
+            ElseIf trimmedString.StartsWith("idunno") Then
+                Client.SendMessageToChannel("¯\\_(ツ)_/¯", e.Channel)
             ElseIf trimmedString.StartsWith("selfdestruct") Then
                 If e.author.user.id = Settings.OwnerUserID Then
                     Client.SendMessageToChannel("Alluha akbar!", e.Channel)
