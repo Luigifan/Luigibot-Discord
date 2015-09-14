@@ -105,6 +105,7 @@ Module Main
                             Client.SendMessageToChannel("Code confirmed! @" + e.author.user.username + ", you are now my administrator!", e.Channel)
                             Settings.OwnerUserID = e.author.user.id
                             SaveSettings()
+                            IsAuthenticating = False
                         Else
                             Client.SendMessageToChannel("Wrong code! Please check the console for the correct one", e.Channel)
                         End If
