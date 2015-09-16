@@ -1,6 +1,9 @@
 ﻿Imports System.IO
+Imports System.Threading
 Imports DiscordSharp
 Imports DiscordSharp.Events
+Imports [IF].Lastfm.Core.Api
+Imports [IF].Lastfm.Core.Objects
 Imports Luigibot2
 Imports Newtonsoft.Json
 
@@ -56,13 +59,16 @@ Module Main
         LoginInfo.password = PasswordArray
         Client.LoginInformation = LoginInfo
 
+        Connect()
+    End Sub
+
+    Sub Connect()
         Dim token As String = Client.SendLoginRequest()
         If token IsNot "" Then
             Client.ConnectAndReadMessages()
         End If
         While True
         End While
-
     End Sub
 
     Dim Code As String = RanCode.GenerateRandomCode()
@@ -84,17 +90,14 @@ Module Main
         End If
     End Sub
 
+    Sub SocketClosed_EventHandler(sender As Object, e As DiscordSocketClosedEventArgs) Handles Client.SocketClosed
+        Console.WriteLine("Socket closed? {0} (Code {1}; Clean: {2})", e.Reason, e.Code, e.WasClean)
+        Thread.Sleep(30 * 1000)
+        Console.WriteLine("trying reconnect...")
+        Connect()
+    End Sub
+
     Sub Usertyping_EventHandler(sender As Object, e As DiscordTypingStartEventArgs) Handles Client.UserTypingStart
-        Dim message As String = "Shutup, <@" + e.user.user.id + ">"
-        If (e.user.user.id = Settings.OwnerUserID) Then
-            If (Client.GetMessageLog().Count > 0) Then
-                If (Client.GetMessageLog().ElementAt(0).Value.content <> message) Then
-                    Client.SendMessageToChannel(message, e.channel)
-                End If
-            Else
-                Client.SendMessageToChannel(message, e.channel)
-            End If
-        End If
 
     End Sub
 
@@ -106,12 +109,48 @@ Module Main
         Client.SendMessageToUser("New message type '" + e.RawJson("t").ToString() + "' has been discovered.", Client.GetServersList.Find(Function(x) x.members.Find(Function(y) y.user.id = Settings.OwnerUserID) IsNot Nothing).members.Find(Function(x) x.user.id = Settings.OwnerUserID))
     End Sub
 
+    Sub Lastfm(e As DiscordMessageEventArgs)
+#If __MONOCS__ Then
+        Client.SendMessageToChannel("Sorry, not on Mono :(", e.Channel)
+#Else
+        Dim split As String() = e.message.content.Split({" "c}, 2)
+        If (split.Length > 0) Then
+            Using lastfmClient As New LastfmClient("4de0532fe30150ee7a553e160fbbe0e0", "0686c5e41f20d2dc80b64958f2df0f0c", Nothing, Nothing)
+                Try
+                    Dim recentScrobbles = lastfmClient.User.GetRecentScrobbles(split(1).Trim(), Nothing, 1, 1)
+                    Dim lastTrack As LastTrack = recentScrobbles.Result.Content(1)
+                    Client.SendMessageToChannel(String.Format("**{0}** last listened to *{1}* by *{2}*", split(1), lastTrack.Name, lastTrack.ArtistName), e.Channel)
+                Catch ex As Exception
+                    Client.SendMessageToChannel("User *" + split(1) + "* not found!", e.Channel)
+                End Try
+            End Using
+        Else
+            Client.SendMessageToChannel("Whos' Last.FM am I checking?", e.Channel)
+        End If
+
+#End If
+    End Sub
+
+    Sub Changename(e As DiscordMessageEventArgs)
+        Dim split As String() = e.message.content.Split({" "c}, 2)
+        If split.Length > 0 Then
+            Client.ChangeBotUsername(split(1))
+            Client.SendMessageToChannel("Name changed!", e.Channel)
+        Else
+            Client.SendMessageToChannel("Change bot's name to what?", e.Channel)
+        End If
+    End Sub
+
     Sub OnMessage_EventHandler(sender As Object, e As DiscordMessageEventArgs) Handles Client.MessageReceived
         Console.WriteLine(String.Format("<{0}> in #{1}: {2}", e.author.user.username, e.Channel.name, e.message.content))
         If e.message.content.StartsWith(Settings.CommandPrefix) Then
             Dim trimmedString As String = e.message.content.Replace("?"c, "")
             If trimmedString.StartsWith("status") Then
                 Client.SendMessageToChannel("I work! In VB!", e.Channel)
+            ElseIf trimmedString.StartsWith("changename") Then
+                If e.author.user.id = Settings.OwnerUserID Then
+                    Changename(e)
+                End If
             ElseIf trimmedString.StartsWith("eightball") Or trimmedString.StartsWith("8ball") Then
                 Eightball(e)
             ElseIf trimmedString.StartsWith("slap") Then
@@ -122,6 +161,8 @@ Module Main
                         Client.SendMessageToChannel("\* **" + Client.Me.user.username + "** slaps **@" + split(1) + " ** around with a giant fishbot.", e.Channel)
                     End If
                 End If
+            ElseIf trimmedString.StartsWith("lastfm") Then
+                Lastfm(e)
             ElseIf trimmedString.StartsWith("idunno") Then
                 Client.SendMessageToChannel("¯\\_(ツ)_/¯", e.Channel)
             ElseIf trimmedString.StartsWith("selfdestruct") Then
