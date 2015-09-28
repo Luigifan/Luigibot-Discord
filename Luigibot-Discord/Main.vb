@@ -40,25 +40,17 @@ Module Main
             Console.ReadLine()
             Settings.BotEmail = BotEmail
             Settings.BotPassword = Encrypter.EncryptToString(BotPassword)
-
             SaveSettings()
         Else
             LoadSettings()
         End If
 
-        If Settings.OwnerUserID = "0" Then
+        If Settings.OwnerUserIDs(0) = "0" Then
             IsAuthenticating = True
         End If
 
-        Dim LoginInfo As New DiscordLoginInformation()
-        Dim EmailArray(1) As String
-        EmailArray(0) = Settings.BotEmail
-        Dim PasswordArray(1) As String
-        PasswordArray(0) = Encrypter.DecryptString(Settings.BotPassword)
-        LoginInfo.email = EmailArray
-        LoginInfo.password = PasswordArray
-        Client.LoginInformation = LoginInfo
-
+        Client.ClientPrivateInformation.email = Settings.BotEmail
+        Client.ClientPrivateInformation.password = Encrypter.DecryptString(Settings.BotPassword)
         Connect()
     End Sub
 
@@ -105,8 +97,7 @@ Module Main
         Using sw As New StreamWriter(e.RawJson("t").ToString())
             sw.WriteLine(e.RawJson)
         End Using
-
-        Client.SendMessageToUser("New message type '" + e.RawJson("t").ToString() + "' has been discovered.", Client.GetServersList.Find(Function(x) x.members.Find(Function(y) y.user.id = Settings.OwnerUserID) IsNot Nothing).members.Find(Function(x) x.user.id = Settings.OwnerUserID))
+        Client.SendMessageToUser("New message type '" + e.RawJson("t").ToString() + "' has been discovered.", Client.GetServersList.Find(Function(x) x.members.Find(Function(y) y.user.id = Settings.OwnerUserIDs(0)) IsNot Nothing).members.Find(Function(x) x.user.id = Settings.OwnerUserIDs(0)))
     End Sub
 
     Sub Lastfm(e As DiscordMessageEventArgs)
@@ -134,7 +125,10 @@ Module Main
     Sub Changename(e As DiscordMessageEventArgs)
         Dim split As String() = e.message.content.Split({" "c}, 2)
         If split.Length > 0 Then
-            Client.ChangeBotUsername(split(1))
+            'Client.ChangeBotUsername(split(1))
+            Dim newUserInfo = Client.ClientPrivateInformation
+            newUserInfo.username = split(1)
+            Client.ChangeBotInformation(newUserInfo)
             Client.SendMessageToChannel("Name changed!", e.Channel)
         Else
             Client.SendMessageToChannel("Change bot's name to what?", e.Channel)
@@ -147,8 +141,15 @@ Module Main
             Dim trimmedString As String = e.message.content.Replace("?"c, "")
             If trimmedString.StartsWith("status") Then
                 Client.SendMessageToChannel("I work! In VB!", e.Channel)
+            ElseIf trimmedString.StartsWith("changetopic") Then
+                If e.author.user.id = Settings.OwnerUserIDs(0) Then
+                    Dim split = e.message.content.Split({" "c}, 2)
+                    If split.Length > 0 Then
+                        ChangeChannelTopic(split(1), e.Channel)
+                    End If
+                End If
             ElseIf trimmedString.StartsWith("changename") Then
-                If e.author.user.id = Settings.OwnerUserID Then
+                If e.author.user.id = Settings.OwnerUserIDs(0) Then
                     Changename(e)
                 End If
             ElseIf trimmedString.StartsWith("eightball") Or trimmedString.StartsWith("8ball") Then
@@ -166,7 +167,7 @@ Module Main
             ElseIf trimmedString.StartsWith("idunno") Then
                 Client.SendMessageToChannel("¯\\_(ツ)_/¯", e.Channel)
             ElseIf trimmedString.StartsWith("selfdestruct") Then
-                If e.author.user.id = Settings.OwnerUserID Then
+                If e.author.user.id = Settings.OwnerUserIDs(0) Then
                     Client.SendMessageToChannel("Alluha akbar!", e.Channel)
                     Environment.Exit(0)
                 End If
@@ -176,7 +177,7 @@ Module Main
                     If split.Length > 0 Then
                         If split(1).Trim() = Code Then
                             Client.SendMessageToChannel("Code confirmed! @" + e.author.user.username + ", you are now my administrator!", e.Channel)
-                            Settings.OwnerUserID = e.author.user.id
+                            Settings.OwnerUserIDs(0) = e.author.user.id
                             SaveSettings()
                             IsAuthenticating = False
                         Else
@@ -188,6 +189,10 @@ Module Main
                 End If
             End If
         End If
+    End Sub
+
+    Sub ChangeChannelTopic(ByVal topic As String, ByVal channel As DiscordChannel)
+        Client.ChangeChannelTopic(topic, channel)
     End Sub
 
     Function IsFirstRun() As Boolean

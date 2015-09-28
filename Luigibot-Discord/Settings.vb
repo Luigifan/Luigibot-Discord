@@ -6,19 +6,21 @@ Public Class Settings
     Public Property WelcomeUserEnabled As Boolean
     Public Property SeenEnabled As Boolean
     Public Property AllowedChannels As List(Of DiscordSharp.DiscordChannel)
-    Public Property OwnerUserID As String
+    Public Property OwnerUserIDs
     Public Property CommandPrefix As Char
 
     Public Property BotEmail As String
     Public Property BotPassword As String 'This is encrypted
 
     Sub New()
+        Dim _ownerUserIDs(20) As String
+        OwnerUserIDs = _ownerUserIDs
         EightballEnabled = True
         SlapEnabled = True
         SeenEnabled = False
         AllowedChannels = New List(Of
             DiscordChannel)
-        OwnerUserID = 0
+        OwnerUserIDs(0) = 0
         CommandPrefix = "?"c
 
     End Sub
