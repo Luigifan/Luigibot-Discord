@@ -52,6 +52,7 @@ Module Main
         Client.ClientPrivateInformation.email = Settings.BotEmail
         Client.ClientPrivateInformation.password = Encrypter.DecryptString(Settings.BotPassword)
         Connect()
+        System.Windows.Forms.Application.Run()
     End Sub
 
     Sub Connect()
@@ -59,8 +60,6 @@ Module Main
         If token IsNot "" Then
             Client.ConnectAndReadMessages()
         End If
-        While True
-        End While
     End Sub
 
     Dim Code As String = RanCode.GenerateRandomCode()
