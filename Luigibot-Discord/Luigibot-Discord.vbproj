@@ -47,8 +47,9 @@
     <OptionInfer>On</OptionInfer>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DiscordSharp">
-      <HintPath>.\DiscordSharp.dll</HintPath>
+    <Reference Include="DiscordSharp, Version=0.5.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\DiscordSharp.0.5.0.0-alpha\lib\net451\DiscordSharp.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="IF.Lastfm.Core, Version=0.2.1.246, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Inflatable.Lastfm.0.2.1.246\lib\portable-win8+net45+wp8+wpa81\IF.Lastfm.Core.dll</HintPath>
@@ -76,8 +77,9 @@
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Net.Http" />
-    <Reference Include="websocket-sharp">
-      <HintPath>.\websocket-sharp.dll</HintPath>
+    <Reference Include="websocket-sharp, Version=1.0.2.36589, Culture=neutral, PublicKeyToken=5660b08a1845a91e, processorArchitecture=MSIL">
+      <HintPath>..\packages\WebSocketSharp.1.0.3-rc9\lib\websocket-sharp.dll</HintPath>
+      <Private>True</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>

@@ -58,7 +58,7 @@ Module Main
     Sub Connect()
         Dim token As String = Client.SendLoginRequest()
         If token IsNot "" Then
-            Client.ConnectAndReadMessages()
+            Client.Connect()
         End If
     End Sub
 
@@ -175,7 +175,7 @@ Module Main
                     Dim split As String() = e.message.content.Split({" "c}, 2)
                     If split.Length > 0 Then
                         If split(1).Trim() = Code Then
-                            Client.SendMessageToChannel("Code confirmed! @" + e.author.user.username + ", you are now my administrator!", e.Channel)
+                            Client.SendMessageToChannel("Code confirmed! <@" + e.author.user.id ">, you are now my administrator!", e.Channel)
                             Settings.OwnerUserIDs(0) = e.author.user.id
                             SaveSettings()
                             IsAuthenticating = False
